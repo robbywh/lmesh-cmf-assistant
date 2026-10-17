@@ -1,6 +1,13 @@
 packages:
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  '@parcel/watcher': false
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  esbuild: true
+  prisma: true
+  unrs-resolver: false
 minimumReleaseAgeExclude:
   - '@turbo/darwin-64@2.11.9'
   - '@turbo/darwin-arm64@2.11.9'
@@ -9,3 +16,12 @@ minimumReleaseAgeExclude:
   - '@turbo/windows-64@2.11.9'
   - '@turbo/windows-arm64@2.11.9'
   - turbo@2.11.9
+# @nestjs/platform-fastify require()s @fastify/static (used by Swagger UI) without
+# declaring it; expose it as an optional peer so pnpm links the backend's copy.
+packageExtensions:
+  '@nestjs/platform-fastify':
+    peerDependencies:
+      '@fastify/static': '*'
+    peerDependenciesMeta:
+      '@fastify/static':
+        optional: true

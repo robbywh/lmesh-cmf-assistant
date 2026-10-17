@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "prisma:generate": {
+      "inputs": ["prisma/schema.prisma", "prisma.config.ts"],
+      "outputs": ["src/generated/**"]
+    },
+    "build": {
+      "dependsOn": ["$TURBO_EXTENDS$", "prisma:generate"]
+    },
+    "lint": {
+      "dependsOn": ["$TURBO_EXTENDS$", "prisma:generate"]
+    },
+    "check-types": {
+      "dependsOn": ["$TURBO_EXTENDS$", "prisma:generate"]
+    },
+    "test": {
+      "dependsOn": ["$TURBO_EXTENDS$", "prisma:generate"]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# Shared by every image built with the repo root as context (backend, frontend).
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+out
+**/.DS_Store
+.git
+.claude
+.agents
+**/.agents
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+apps/backend/src/generated

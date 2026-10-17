@@ -1,0 +1,11 @@
+# BuildKit uses this file (instead of a root .dockerignore) when building with
+# -f apps/frontend/Dockerfile. Paths are relative to the build context (repo root).
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+.git
+out

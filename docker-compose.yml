@@ -1,0 +1,82 @@
+# Full stack: `docker compose up --build`
+#   frontend -> http://localhost:5173   (nginx, proxies /api to backend)
+#   backend  -> http://localhost:3000/api/v1, Swagger at /api/docs
+# Values come from the root .env (see .env.example); every variable has a default.
+name: lmesh-cmf-assistant
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lmesh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lmesh}
+      POSTGRES_DB: ${POSTGRES_DB:-lmesh_cmf}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lmesh}:${POSTGRES_PASSWORD:-lmesh}@postgres:5432/${POSTGRES_DB:-lmesh_cmf}?schema=public
+      SEED_ON_START: ${SEED_ON_START:-true}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-60000}
+      AI_HISTORY_MAX_MESSAGES: ${AI_HISTORY_MAX_MESSAGES:-20}
+      # Defaults to an Ollama running on the host; use http://ollama:11434 with `--profile ollama`.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-meta-llama/llama-3.1-8b-instruct:free}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash-lite}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+  # Optional containerised Ollama: `docker compose --profile ollama up`
+  # then `docker compose exec ollama ollama pull llama3.2`
+  # and set OLLAMA_BASE_URL=http://ollama:11434 in .env.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  postgres-data:
+  ollama-data:
