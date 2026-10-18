@@ -28,7 +28,10 @@ COPY --from=prepare /app/out/full/ .
 # Vite inlines VITE_* variables at build time, so they must be build args.
 ARG VITE_API_BASE_URL=/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN pnpm --filter frontend build
+# Turbo (a root devDependency) builds @lmesh/api-contract first via ^build.
+RUN pnpm exec turbo run build --filter=frontend
+# MSW's dev-only service worker must not ship in the production image.
+RUN rm -f apps/frontend/dist/mockServiceWorker.js
 
 FROM nginx:${NGINX_VERSION} AS runner
 ENV BACKEND_UPSTREAM=http://backend:3000

@@ -13,7 +13,7 @@ import { config } from "@lmesh/eslint-config/react";
  */
 export default [
   {
-    ignores: ["dist/**", "src/routeTree.gen.ts", ".agents/**"],
+    ignores: ["dist/**", "src/routeTree.gen.ts", ".agents/**", "public/mockServiceWorker.js"],
   },
   ...config,
   {

@@ -3,6 +3,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
+import { Toaster } from "@/components/ui/sonner";
+
 export interface RouterContext {
   queryClient: QueryClient;
 }
@@ -15,6 +17,7 @@ function RootLayout() {
   return (
     <>
       <Outlet />
+      <Toaster />
       {import.meta.env.DEV && (
         <>
           <ReactQueryDevtools buttonPosition="bottom-left" />
