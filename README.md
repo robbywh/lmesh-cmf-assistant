@@ -124,7 +124,7 @@ Documented in [`.env.example`](.env.example) (copy it to `.env`). Used by Docker
 | `GEMINI_API_KEY`            | _(empty)_                                     | Gemini API key                                                                                                                                                |
 | `GEMINI_MODEL`              | `gemini-2.0-flash-lite`                       | Gemini model id                                                                                                                                               |
 
-The frontend's [`apps/frontend/.env.example`](apps/frontend/.env.example) defines `VITE_API_BASE_URL` (baked in at build time), `VITE_DEV_API_PROXY_TARGET` (dev proxy target) and `VITE_API_MOCKING` (dev-only mock API).
+The frontend's [`apps/frontend/.env.example`](apps/frontend/.env.example) defines `VITE_API_BASE_URL` (baked in at build time), `VITE_DEV_API_PROXY_TARGET` (dev proxy target) and `VITE_API_MOCKING` (dev-only mock API). Copy it to `apps/frontend/.env` only for local development without Docker, and only to change these values (for example `VITE_API_MOCKING=true` to run the frontend without a backend). Docker Compose does not read this file. The frontend image gets `VITE_API_BASE_URL` from a build arg that defaults to `/api/v1`.
 
 ## Running tests
 
@@ -169,6 +169,7 @@ If you prefer running backend and frontend directly on the host with Node.js and
 ```sh
 pnpm install
 cp .env.example .env
+cp apps/frontend/.env.example apps/frontend/.env   # optional: the defaults match the code
 pnpm --filter backend prisma:migrate:deploy
 pnpm --filter backend db:seed
 pnpm dev
