@@ -1,159 +1,144 @@
-# Turborepo starter
+# lmesh CMF Assistant
 
-This Turborepo starter is maintained by the Turborepo core team.
+A web application for automotive designers to create design projects and chat
+with an AI assistant about design direction, colour-material-finish (CMF)
+themes, and material choices, with the assistant kept aware of each project's
+context (see `docs/requirements.md` for the full brief this project was built
+against).
 
-## Using this example
+**Current status:** this is an early scaffold. The backend currently exposes
+only a health check endpoint, a `User` Prisma model/migration, and a seed
+script that creates a test user with a bcrypt-hashed password; there is no
+authentication, project, or AI/chat module yet. The frontend currently has
+only a single placeholder route. The product features described above are
+the target scope (see `docs/requirements.md`), not yet implemented.
 
-Run the following command:
+## Repo structure
 
-```sh
-npx create-turbo@latest
-```
+This is a [Turborepo](https://turborepo.dev) monorepo managed with pnpm workspaces.
 
-## What's inside?
+- `apps/backend` — API server: NestJS 11 (Fastify adapter), Prisma, PostgreSQL.
+- `apps/frontend` — SPA: React 19, TanStack Router, TanStack Query, Zustand, Tailwind CSS v4, served by Vite in dev and nginx in Docker.
+- `packages/ui` — shared React UI component stubs (`Button`, `Card`, `Code`).
+- `packages/eslint-config` — shared ESLint configurations.
+- `packages/typescript-config` — shared `tsconfig.json` bases.
 
-This Turborepo includes the following packages/apps:
+## Tech stack
 
-### Apps and Packages
+- **Backend:** NestJS 11 + Fastify, Prisma 7 (`@prisma/adapter-pg`), PostgreSQL 17, class-validator, bcryptjs, Jest.
+- **Frontend:** React 19, TanStack Router v1, TanStack Query v5, Zustand, Tailwind CSS v4, Radix UI, Vite, Vitest.
+- **Tooling:** Turborepo, pnpm workspaces, ESLint, Prettier, TypeScript, Docker / Docker Compose.
+- **AI provider config:** the backend's env schema (`AI_PROVIDER`: `ollama` | `openrouter` | `gemini`, plus related model/key vars) anticipates Ollama, OpenRouter, or Gemini, but no AI/chat module or LLM client is implemented yet.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Prerequisites
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- Node.js `>= 24` (root `package.json` `engines`)
+- pnpm `11.25.0` (root `package.json` `packageManager`)
+- Docker and Docker Compose, if you want to run the full stack via Compose
 
-### Utilities
+## Setup
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
+Install dependencies from the repo root:
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm exec turbo build
-pnpm exec turbo build
+pnpm install
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Copy the environment file templates:
 
 ```sh
-turbo build --filter=docs
+cp .env.example .env
+cp apps/frontend/.env.example apps/frontend/.env   # optional, has working defaults
 ```
 
-Without global `turbo`:
+### Environment variables (root `.env`)
+
+Used by Docker Compose and by the backend when run locally. Every variable has
+a default (see `.env.example`):
+
+| Variable | Purpose |
+| --- | --- |
+| `FRONTEND_PORT`, `BACKEND_PORT`, `POSTGRES_PORT`, `OLLAMA_PORT` | Host-side port mappings |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | PostgreSQL credentials/database name |
+| `DATABASE_URL` | Prisma/backend connection string (points at `localhost` for local dev; overridden to the `postgres` service inside Compose) |
+| `NODE_ENV`, `HOST`, `PORT` | Backend runtime env, bind address/port |
+| `CORS_ORIGIN` | Allowed browser origin for the API |
+| `SEED_ON_START` | Runs the idempotent seed script on backend container start |
+| `JWT_SECRET`, `JWT_EXPIRES_IN` | Validated at boot; reserved for auth (no JWT issuing/verification is implemented yet) |
+| `AI_PROVIDER` | `ollama` \| `openrouter` \| `gemini` (validated at boot; no AI module consumes it yet) |
+| `AI_REQUEST_TIMEOUT_MS`, `AI_HISTORY_MAX_MESSAGES` | AI call timeout and conversation history limit |
+| `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | Ollama connection (defaults to the host machine) |
+| `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | OpenRouter credentials/model |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Gemini credentials/model |
+
+The frontend's `apps/frontend/.env.example` additionally defines
+`VITE_API_BASE_URL` (baked in at build time) and `VITE_DEV_API_PROXY_TARGET`
+(dev-server proxy target for `/api`).
+
+## Running locally (without Docker)
+
+You need a reachable PostgreSQL instance (e.g. `docker compose up postgres`,
+or your own local Postgres) matching `DATABASE_URL` in `.env`. Apply migrations
+and seed the test user before starting the app for the first time:
 
 ```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+pnpm --filter backend prisma:migrate:deploy
+pnpm --filter backend db:seed
+pnpm dev
 ```
 
-### Develop
+`pnpm dev` runs `turbo run dev` for all apps:
 
-To develop all apps and packages, run the following command:
+- Backend: generates the Prisma client then starts NestJS in watch mode — API at `http://localhost:3000/api/v1`, Swagger UI at `http://localhost:3000/api/docs`.
+- Frontend: Vite dev server at `http://localhost:5173`, proxying `/api` to the backend.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Running with Docker Compose
 
 ```sh
-cd my-turborepo
-turbo dev
+docker compose up --build
 ```
 
-Without global `turbo`, use your package manager:
+Services (ports are host-side, from `.env`/`docker-compose.yml` defaults):
+
+| Service | URL | Notes |
+| --- | --- | --- |
+| `frontend` | http://localhost:5173 | nginx serving the built SPA, proxies `/api` to `backend` |
+| `backend` | http://localhost:3000/api/v1 | Swagger docs at `/api/docs`; runs Prisma migrations and the seed script on start |
+| `postgres` | localhost:5432 | PostgreSQL 17 (Alpine) |
+| `ollama` (optional) | localhost:11434 | Only started with `docker compose --profile ollama up`; set `OLLAMA_BASE_URL=http://ollama:11434` to use it |
+
+On backend startup, pending Prisma migrations are applied and, if
+`SEED_ON_START=true` (the default), the database is seeded with a test user:
+
+```
+test@lmesh.eu / password
+```
+
+## Other scripts
+
+From the repo root (run via Turborepo across all apps/packages):
 
 ```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+pnpm build         # turbo run build
+pnpm lint           # turbo run lint
+pnpm check-types    # turbo run check-types
+pnpm test           # turbo run test
+pnpm format         # prettier --write "**/*.{ts,tsx,md}"
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Backend-specific (run from the repo root with `pnpm --filter backend <script>`):
 
 ```sh
-turbo dev --filter=web
+pnpm --filter backend prisma:generate        # generate the Prisma client
+pnpm --filter backend prisma:migrate         # create/apply a dev migration
+pnpm --filter backend prisma:migrate:deploy  # apply pending migrations (used in Docker)
+pnpm --filter backend db:seed                # run the idempotent seed script
+pnpm --filter backend test:watch             # Jest in watch mode
 ```
 
-Without global `turbo`:
+Frontend-specific (run from the repo root with `pnpm --filter frontend <script>`):
 
 ```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+pnpm --filter frontend preview     # preview the production build
+pnpm --filter frontend test:watch  # Vitest in watch mode
 ```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)

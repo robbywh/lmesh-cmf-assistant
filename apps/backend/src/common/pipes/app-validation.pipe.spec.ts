@@ -1,4 +1,5 @@
 import { ValidationError } from "@nestjs/common";
+import { describe, expect, it } from "vitest";
 
 import { flattenValidationErrors } from "./app-validation.pipe";
 

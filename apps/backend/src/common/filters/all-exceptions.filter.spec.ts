@@ -4,6 +4,15 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
 
 import {
   ErrorCode,
@@ -15,8 +24,8 @@ import { AllExceptionsFilter } from "./all-exceptions.filter";
 
 interface ReplyMock {
   sent: boolean;
-  status: jest.Mock;
-  send: jest.Mock;
+  status: Mock;
+  send: Mock;
 }
 
 function createHost(reply: ReplyMock): ArgumentsHost {
@@ -26,7 +35,7 @@ function createHost(reply: ReplyMock): ArgumentsHost {
 }
 
 function createReply(sent = false): ReplyMock {
-  const reply: ReplyMock = { sent, status: jest.fn(), send: jest.fn() };
+  const reply: ReplyMock = { sent, status: vi.fn(), send: vi.fn() };
   reply.status.mockReturnValue(reply);
   return reply;
 }
@@ -36,10 +45,10 @@ describe("AllExceptionsFilter", () => {
 
   beforeEach(() => {
     filter = new AllExceptionsFilter();
-    jest.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it("serializes an AppException with its own status and code", () => {
     const reply = createReply();

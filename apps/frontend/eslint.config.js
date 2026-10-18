@@ -1,11 +1,13 @@
-import { config } from "@repo/eslint-config/react-internal";
-import globals from "globals";
+import { config } from "@lmesh/eslint-config/react";
 
 /**
- * The shared config parses TypeScript with Babel, which has no type
- * information. typescript-eslint is not used because it does not support
- * TypeScript 7 yet. Undefined and unused identifiers are left to `tsc`
- * (strict, noUnusedLocals, noUnusedParameters).
+ * Frontend ESLint config: the shared React + Vite preset.
+ *
+ * Linting is syntax-only (no type-aware rules): typescript-eslint parses with
+ * the TypeScript 5.9 pinned in @lmesh/eslint-config because it cannot load
+ * TypeScript 7, which this app compiles with. Type errors, undefined and
+ * unused identifiers are left to `tsc` (strict, noUnusedLocals,
+ * noUnusedParameters).
  *
  * @type {import("eslint").Linter.Config[]}
  */
@@ -15,35 +17,22 @@ export default [
   },
   ...config,
   {
-    files: ["**/*.{ts,tsx}"],
+    // TanStack Router file routes export `Route` and keep the route component
+    // private. With `autoCodeSplitting` (vite.config.ts) the router plugin moves
+    // the component into its own module, so Fast Refresh boundaries are
+    // preserved and this rule only reports false positives here.
+    files: ["src/routes/**/*.tsx"],
     rules: {
-      "no-undef": "off",
-      "no-unused-vars": "off",
+      "react-refresh/only-export-components": "off",
     },
   },
   {
+    // shadcn/ui components are generated and co-export their cva variants
+    // (e.g. buttonVariants); editing them falls back to a full reload, which
+    // is acceptable for vendored primitives.
+    files: ["src/components/ui/**/*.tsx"],
     rules: {
-      // Vite built-ins on import.meta.env, not user-provided env vars.
-      "turbo/no-undeclared-env-vars": [
-        "warn",
-        { allowList: ["^DEV$", "^PROD$", "^MODE$", "^SSR$", "^BASE_URL$"] },
-      ],
-    },
-  },
-  {
-    files: ["**/*.tsx"],
-    languageOptions: {
-      parserOptions: {
-        babelOptions: {
-          parserOpts: { plugins: ["jsx"] },
-        },
-      },
-    },
-  },
-  {
-    files: ["*.config.{js,ts}"],
-    languageOptions: {
-      globals: globals.node,
+      "react-refresh/only-export-components": "off",
     },
   },
 ];

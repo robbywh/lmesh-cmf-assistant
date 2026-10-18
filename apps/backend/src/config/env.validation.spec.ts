@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { AiProviderName, NodeEnvironment, validateEnv } from "./env.validation";
 
 describe("validateEnv", () => {

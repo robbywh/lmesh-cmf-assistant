@@ -1,9 +1,19 @@
 {
-  "name": "@repo/typescript-config",
+  "name": "@lmesh/typescript-config",
   "version": "0.0.0",
   "private": true,
+  "description": "Shared tsconfig presets: base, nestjs (apps/backend), react-vite (apps/frontend), library (compiled workspace packages).",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  }
+  "exports": {
+    "./base.json": "./base.json",
+    "./nestjs.json": "./nestjs.json",
+    "./react-vite.json": "./react-vite.json",
+    "./library.json": "./library.json"
+  },
+  "files": [
+    "base.json",
+    "nestjs.json",
+    "react-vite.json",
+    "library.json"
+  ]
 }

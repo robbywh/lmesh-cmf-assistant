@@ -5,6 +5,9 @@ allowBuilds:
   '@parcel/watcher': false
   '@prisma/engines': true
   '@scarf/scarf': false
+  # postinstall only checks for the native binary (installed via optionalDependencies)
+  # and falls back to downloading a wasm build; not needed.
+  '@swc/core': false
   esbuild: true
   prisma: true
   unrs-resolver: false

@@ -3,6 +3,7 @@ import {
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AppModule } from "../src/app.module";
 import { ErrorCode } from "../src/common/exceptions";
@@ -12,11 +13,11 @@ import { setupApp } from "../src/setup-app";
 describe("GET /api/v1/health (e2e, database mocked)", () => {
   let app: NestFastifyApplication;
   const prismaMock = {
-    $queryRaw: jest.fn(),
-    $connect: jest.fn(),
-    $disconnect: jest.fn(),
-    onModuleInit: jest.fn(),
-    onModuleDestroy: jest.fn(),
+    $queryRaw: vi.fn(),
+    $connect: vi.fn(),
+    $disconnect: vi.fn(),
+    onModuleInit: vi.fn(),
+    onModuleDestroy: vi.fn(),
   };
 
   beforeAll(async () => {
