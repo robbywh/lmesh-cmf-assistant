@@ -1,0 +1,44 @@
+{
+  "name": "@lmesh/api-contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "API contract shared by apps/backend and apps/frontend: Zod schemas, inferred types, ErrorCode, SSE events and the endpoint map.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@lmesh/eslint-config": "workspace:*",
+    "@lmesh/typescript-config": "workspace:*",
+    "eslint": "10.9.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.5"
+  }
+}
