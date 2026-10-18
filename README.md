@@ -19,12 +19,12 @@ functional specification is in [`docs/functional-specification.md`](docs/functio
 
 ## Documentation
 
-| Document | Purpose |
-| --- | --- |
-| [`docs/requirements.md`](docs/requirements.md) | Original brief and problem statement |
+| Document                                                               | Purpose                                                                                                |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [`docs/requirements.md`](docs/requirements.md)                         | Original brief and problem statement                                                                   |
 | [`docs/functional-specification.md`](docs/functional-specification.md) | Complete Functional Specification (FSD): system architecture, sequence flows, data model, and security |
-| [`docs/api-contract.md`](docs/api-contract.md) | Endpoint specifications, SSE event protocols, and envelope schemas |
-| [`DECISIONS.md`](DECISIONS.md) | Architecture answers, technical rationale, and trade-offs |
+| [`docs/api-contract.md`](docs/api-contract.md)                         | Endpoint specifications, SSE event protocols, and envelope schemas                                     |
+| [`DECISIONS.md`](DECISIONS.md)                                         | Architecture answers, technical rationale, and trade-offs                                              |
 
 ## Quick start
 
@@ -37,7 +37,7 @@ cp .env.example .env
 Then edit `.env`:
 
 1. Set `OPENROUTER_API_KEY` to a free key from [openrouter.ai](https://openrouter.ai/keys) (or switch to Ollama, see [AI provider](#ai-provider)).
-2. Make sure `OPENROUTER_MODEL` in your own `.env` is `nvidia/nemotron-3-ultra-550b-a55b:free` (the default in `.env.example`). Docker Compose prefers the value in `.env`, so a `.env` copied from an older example may still name a retired model.
+2. Make sure `OPENROUTER_MODEL` in your own `.env` is `nvidia/nemotron-3-ultra-550b-a55b:free` (the default in `.env.example`).
 3. Replace the placeholder `BETTER_AUTH_SECRET` with a real one: `openssl rand -base64 48`. The app still starts with the placeholder, but the backend logs a warning, because anyone could forge sessions with a public secret.
 
 ```sh
@@ -175,10 +175,12 @@ pnpm dev
 ```
 
 `pnpm dev` starts:
+
 - The **NestJS backend** in watch mode (<http://localhost:3000/api/v1>, with Swagger UI at <http://localhost:3000/api/docs>)
 - The **Vite frontend** dev server on <http://localhost:5173> (which proxies `/api` to the backend)
 
 Other development commands:
+
 - `pnpm build` — Build all apps and packages via Turbo
 - `pnpm format` — Format codebase with Prettier
 - `pnpm --filter backend test:watch` — Vitest in watch mode for backend tests
