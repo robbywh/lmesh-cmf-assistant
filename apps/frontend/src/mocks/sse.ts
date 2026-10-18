@@ -16,6 +16,8 @@ export type StreamScenario =
       tokenDelayMs?: number;
       /** Emit a `: ping` comment before the first token. */
       ping?: boolean;
+      /** Awaited before each token, so a test can release tokens one at a time. */
+      beforeToken?: () => Promise<void>;
     }
   | {
       kind: "error-midstream";
@@ -24,6 +26,7 @@ export type StreamScenario =
       tokens?: string[];
       tokenDelayMs?: number;
       ping?: boolean;
+      beforeToken?: () => Promise<void>;
     }
   | {
       kind: "pre-stream-error";
@@ -117,6 +120,7 @@ export async function* scenarioEvents(
   let content = "";
   for (const delta of tokens) {
     await sleep(delayMs);
+    await scenario.beforeToken?.();
     content += delta;
     yield { type: SseEventType.TOKEN, messageId: assistantMessage.id, delta };
   }

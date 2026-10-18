@@ -31,6 +31,32 @@ const items = () => screen.queryAllByTestId("message-item");
 const streamingText = () =>
   screen.getByRole("log").querySelector("[aria-live=polite]")?.textContent ?? "";
 
+/** Holds each mock token until the test releases it, so streaming states can be asserted without racing timers. */
+function createTokenGate() {
+  let permits = 0;
+  let waiting: (() => void) | null = null;
+  return {
+    wait: (): Promise<void> => {
+      if (permits > 0) {
+        permits--;
+        return Promise.resolve();
+      }
+      return new Promise((resolve) => {
+        waiting = resolve;
+      });
+    },
+    release: (count = 1) => {
+      permits += count;
+      if (waiting) {
+        const resolve = waiting;
+        waiting = null;
+        permits--;
+        resolve();
+      }
+    },
+  };
+}
+
 async function typeAndSend(user: ReturnType<typeof userEvent.setup>, text: string) {
   await user.type(await screen.findByLabelText("Message"), text);
   await user.click(screen.getByRole("button", { name: "Send" }));
@@ -39,7 +65,8 @@ async function typeAndSend(user: ReturnType<typeof userEvent.setup>, text: strin
 describe("sending a message", () => {
   it("shows the user message, the indicator, growing text and the final message", async () => {
     signInMock();
-    setStreamScenario({ kind: "success", tokenDelayMs: 40 });
+    const gate = createTokenGate();
+    setStreamScenario({ kind: "success", beforeToken: gate.wait });
     renderApp(`/projects/${EV}`);
     const user = userEvent.setup();
 
@@ -53,12 +80,14 @@ describe("sending a message", () => {
       "Assistant is thinking…",
     );
 
-    await waitFor(() => expect(streamingText().length).toBeGreaterThan(0));
-    const first = streamingText();
-    await waitFor(() => expect(streamingText().length).toBeGreaterThan(first.length));
-    const second = streamingText();
-    await waitFor(() => expect(streamingText().length).toBeGreaterThan(second.length));
+    gate.release();
+    await waitFor(() => expect(streamingText()).toBe("Warm"));
+    gate.release();
+    await waitFor(() => expect(streamingText()).toBe("Warm earth"));
+    gate.release();
+    await waitFor(() => expect(streamingText()).toBe("Warm earth tones"));
 
+    gate.release(Number.POSITIVE_INFINITY);
     await waitFor(() => expect(items()[1]).toHaveAttribute("data-status", "complete"));
     expect(items()).toHaveLength(2);
     expect(items()[1]).toHaveTextContent("Warm earth tones work best with matte, natural materials.");
