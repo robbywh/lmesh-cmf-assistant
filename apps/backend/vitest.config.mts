@@ -28,6 +28,7 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       exclude: ["src/generated/**", "src/main.ts", "src/**/*.spec.ts"],
       reportsDirectory: "coverage",
+      thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
     },
   },
 });

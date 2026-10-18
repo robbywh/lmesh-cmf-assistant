@@ -11,8 +11,8 @@ docker compose up --build -d
 # 2. One-time browser install
 pnpm --filter e2e install:browsers
 
-# 3. Run (builds @lmesh/api-contract first via the pretest:e2e script)
-pnpm --filter e2e test:e2e
+# 3. Run (turbo builds @lmesh/api-contract first)
+pnpm test:e2e
 ```
 
 `E2E_BASE_URL` overrides the base URL (default `http://localhost:5173`). `global-setup.ts` waits up to 60 s for `/api/v1/health` through that origin.

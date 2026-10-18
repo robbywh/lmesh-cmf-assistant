@@ -18,5 +18,11 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     css: true,
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/mocks/**", "src/routeTree.gen.ts", "src/components/ui/**"],
+      thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
+    },
   },
 });

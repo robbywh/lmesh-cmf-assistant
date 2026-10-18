@@ -7,7 +7,13 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "test:backend": "turbo run test --filter=backend",
+    "test:frontend": "turbo run test --filter=frontend",
+    "test:e2e": "turbo run test:e2e --filter=e2e",
+    "test:coverage": "turbo run test:coverage",
+    "test:coverage:backend": "turbo run test:coverage --filter=backend",
+    "test:coverage:frontend": "turbo run test:coverage --filter=frontend"
   },
   "devDependencies": {
     "prettier": "3.9.6",

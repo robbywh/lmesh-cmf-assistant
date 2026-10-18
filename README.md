@@ -78,7 +78,7 @@ While an answer is streaming, sending, summarising and resetting are disabled (t
 
 Free OpenRouter models come and go (a previous default was retired while this was built). If the default stops working, pick a current one from <https://openrouter.ai/models?q=free> and set `OPENROUTER_MODEL` in `.env`.
 
-To switch provider, set `AI_PROVIDER` and that provider's variables in `.env`, then `docker compose up -d --build backend`:
+To switch provider, set `AI_PROVIDER` and that provider's variables in `.env`, then restart the backend with `docker compose up -d backend` (no rebuild needed: these are runtime variables):
 
 | `AI_PROVIDER` | Needs                                    | Notes                                                                                                                                                                                                     |
 | ------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -140,6 +140,18 @@ pnpm test                       # runs unit + integration + component tests acro
 
 The backend integration tests automatically use a dedicated `lmesh_cmf_test` database (created and migrated automatically on start); no external AI provider key is required (mocked by an integration test double).
 
+To run one app's tests, or to collect coverage (Vitest with the v8 provider):
+
+| Command                       | What it runs                                    |
+| ----------------------------- | ----------------------------------------------- |
+| `pnpm test:backend`           | Backend unit + integration tests                |
+| `pnpm test:frontend`          | Frontend unit + integration tests (no Postgres) |
+| `pnpm test:coverage`          | Backend and frontend tests with coverage        |
+| `pnpm test:coverage:backend`  | Backend tests with coverage                     |
+| `pnpm test:coverage:frontend` | Frontend tests with coverage                    |
+
+Coverage reports (text summary in the terminal, HTML in `coverage/index.html`) are written to `apps/backend/coverage/` and `apps/frontend/coverage/`, which are git-ignored.
+
 To run linter and type checks across the monorepo:
 
 ```sh
@@ -157,7 +169,7 @@ docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build -d
 
 # Install Chromium browser (once) and run test suite
 pnpm --filter e2e install:browsers
-pnpm --filter e2e test:e2e
+pnpm test:e2e
 ```
 
 > **Note:** The sign-in endpoint is rate limited to 5 attempts per 60 seconds per IP. Allow 60 seconds between rapid successive E2E test runs.
