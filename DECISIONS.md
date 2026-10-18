@@ -139,8 +139,6 @@ So the work is split:
 3. **Limit streams per user.** Today only sign-in is rate limited, plus one active stream per project. Each stream uses provider quota, so a per-user limit across projects would protect it.
 4. **Save partial answers periodically.** Saving every few seconds would mean a crash loses seconds of text, not the whole answer.
 5. **Browse archived conversations.** Reset keeps old conversations, but there is no screen to view them yet.
-6. **Run Playwright in CI.** The end-to-end suite runs on demand against the real stack. It should run in CI against a scripted provider.
-7. **Block the seed in production.** The seed user's password is public, so the seed should refuse to run in production unless it is explicitly allowed.
 
 ### Why didn't you do these in the time given?
 
