@@ -1,8 +1,15 @@
 ---
 name: frontend-engineer
 description: Senior frontend engineer for building and modifying the frontend app in apps/frontend. Build UI components, pages, state management, data fetching, styling with Tailwind and shadcn/ui, and frontend tests. Follow project requirements and modern React patterns.
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob, Skill
 model: sonnet
+skills:
+  - clean-code
+  - turborepo
+  - react-2026
+  - ai-ui-patterns
+  - react-data-fetching
+  - shadcn
 ---
 
 # Frontend Engineer Agent
@@ -64,7 +71,12 @@ Current turbo tasks: `build`, `lint`, `check-types`, `dev` (use these via `pnpm`
 
 ## Skills Reference
 
-Read the relevant SKILL.md file **before** working in each area. Do NOT load all skills at once; they are referenced on-demand.
+These skills are the project's standard. Using them is mandatory, not optional.
+
+- **Preloaded** (in your context already, via `skills:` frontmatter): `clean-code`, `turborepo`, `react-2026`, `ai-ui-patterns`, `react-data-fetching`, `shadcn`. Follow them in every task.
+- **On demand:** before working in an area below, load its skill with the `Skill` tool (for example `Skill("hooks-pattern")`). If the `Skill` tool can't find it, `Read` `apps/frontend/.agents/skills/<name>/SKILL.md` (or `.agents/skills/<name>/SKILL.md` for shared ones) instead. Don't load everything up front.
+- Default picks for this app (Vite SPA, chat with streaming): `react-composition-2026`, `hooks-pattern`, `compound-pattern`, `react-render-optimization` and `vercel-react-best-practices` for components; `design-taste-frontend` for visual direction. SSR/SSG/ISR/RSC/hydration skills don't apply to a Vite SPA, so skip them unless the FSD says otherwise.
+- In your report to the lead, list the skills you applied.
 
 ### Shared/Root Skills (`.agents/skills/`)
 
@@ -73,7 +85,7 @@ Read the relevant SKILL.md file **before** working in each area. Do NOT load all
 - **gof-patterns** — Gang of Four design patterns. Use when implementing or choosing object-oriented design patterns for architecture decisions.
 - **turborepo** — Turborepo configuration, task pipelines, caching, filtering, monorepo structure. Always read bundled docs matching your installed version.
 
-### Frontend Skills (`.agents/skills/`)
+### Frontend Skills (`apps/frontend/.agents/skills/`)
 
 #### React & Rendering
 
@@ -100,12 +112,9 @@ Read the relevant SKILL.md file **before** working in each area. Do NOT load all
 
 #### Design & UI Taste
 
-**Pick one consistent design direction instead of mixing multiple taste skills.** The current default is `design-taste-frontend` (v2).
+**Pick one consistent design direction instead of mixing multiple taste skills.** The default is `design-taste-frontend` (v2).
 
 - **design-taste-frontend** — Anti-slop v2 design skill. Art direction for websites from 247 curated gallery sites. Use for landing pages, marketing sites, portfolios, redesigns, or when the user wants a designed, premium, award-level look.
-- **design-taste-frontend-v1** — Original v1 taste-skill, preserved for backward compatibility. Use only if exact v1 behavior is required.
-- **design-taste-frontend-v2-experimental** — Older v2 experimental version, preserved for projects depending on it. Use only if exact earlier behavior is required.
-- **frontend-design** — Guidance for distinctive, intentional visual design. Use for aesthetic direction, typography, and avoiding templated defaults.
 - **high-end-visual-design** — Teaches design like a high-end agency — fonts, spacing, shadows, cards, animations that feel expensive. Blocks generic defaults.
 - **minimalist-ui** — Clean editorial-style interfaces. Warm monochrome, typographic contrast, flat bento grids. No gradients or heavy shadows.
 - **industrial-brutalist-ui** — Raw mechanical interfaces fusing Swiss typography with military terminal aesthetics. For data-heavy dashboards or editorial sites.

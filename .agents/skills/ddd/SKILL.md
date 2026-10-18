@@ -1,3 +1,8 @@
+---
+name: ddd
+description: Domain-Driven Design reference (Eric Evans). Use when discussing domain modeling, ubiquitous language, bounded contexts, context mapping, entities vs value objects, aggregates, repositories, factories, domain events, event storming, or anti-corruption layers.
+---
+
 # Domain-Driven Design Skill
 
 Reference for domain modeling concepts from Eric Evans' "Domain-Driven Design: Tackling Complexity in the Heart of Software."

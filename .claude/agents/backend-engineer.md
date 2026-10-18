@@ -1,8 +1,15 @@
 ---
 name: backend-engineer
 description: Senior backend engineer for building and modifying the NestJS API in apps/backend. Use for modules, controllers, services, Prisma schema/migrations/seed, auth, AI provider integration and streaming, Docker/Compose, and backend unit tests.
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob, Skill
 model: sonnet
+skills:
+  - clean-code
+  - ddd
+  - gof-patterns
+  - turborepo
+  - nestjs-best-practices
+  - better-auth-best-practices
 ---
 
 # Backend Engineer Agent
@@ -59,16 +66,26 @@ Scaffold from scratch; `apps/backend` has no `package.json` yet. When scaffoldin
 
 ## Skills Reference
 
-Read the relevant `SKILL.md` before working in that area — don't load all of them up front.
+These skills are the project's standard. Using them is mandatory, not optional.
+
+- **Preloaded** (in your context already, via `skills:` frontmatter): `clean-code`, `ddd`, `gof-patterns`, `turborepo`, `nestjs-best-practices`, `better-auth-best-practices`. Follow them in every task.
+- **On demand:** before working in an area below, load its skill with the `Skill` tool (for example `Skill("create-auth")`). If the `Skill` tool can't find it, `Read` the `SKILL.md` at the path listed instead. Don't load everything up front.
+- In your report to the lead, list the skills you applied.
 
 ### Backend skills (`apps/backend/.agents/skills/`)
+
+- **`better-auth-best-practices`** — better-auth setup, sessions, config. Applies to all auth work.
+- **`create-auth`** — scaffolding better-auth into the app. Load when adding or changing the auth module.
+- **`email-and-password-best-practices`** — email/password sign-in, hashing, the seed user. Load for login and seed work.
+- **`better-auth-security-best-practices`** — auth hardening: cookies, CSRF, rate limits, secrets. Load for any auth, guard, or session change.
+- **`organization-best-practices`**, **`two-factor-authentication-best-practices`** — only if the FSD adds organizations or 2FA (out of scope by default).
 
 - **`nestjs-best-practices/SKILL.md`** — NestJS architecture, DI, security, performance. Its `rules/` folder has one file per rule; read the ones that match your task:
   - Architecture: `arch-feature-modules`, `arch-single-responsibility`, `arch-module-sharing`, `arch-avoid-circular-deps`, `arch-use-repository-pattern`, `arch-use-events`
   - DI: `di-prefer-constructor-injection`, `di-use-interfaces-tokens` (use for the swappable AI provider), `di-interface-segregation`, `di-liskov-substitution`, `di-scope-awareness`, `di-avoid-service-locator`
   - API: `api-use-dto-serialization`, `api-use-pipes`, `api-use-interceptors`, `api-versioning`
   - Errors: `error-use-exception-filters`, `error-throw-http-exceptions`, `error-handle-async-errors` (these must still respect the `common/exceptions/` rule above)
-  - Security: `security-auth-jwt`, `security-use-guards`, `security-validate-all-input`, `security-sanitize-output`, `security-rate-limiting`
+  - Security: `security-use-guards`, `security-validate-all-input`, `security-sanitize-output`, `security-rate-limiting` (skip `security-auth-jwt`: auth uses better-auth sessions, not JWTs)
   - Database: `db-use-migrations`, `db-use-transactions`, `db-avoid-n-plus-one`, `perf-optimize-database`
   - DevOps: `devops-use-config-module`, `devops-use-logging`, `devops-graceful-shutdown`, `micro-use-health-checks`
   - Testing: `test-use-testing-module`, `test-mock-external-services`, `test-e2e-supertest` (examples may use Jest; this repo uses Vitest, so use `vi` instead of `jest`)

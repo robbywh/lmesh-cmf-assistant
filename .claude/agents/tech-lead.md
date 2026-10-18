@@ -3,6 +3,10 @@ name: tech-lead
 description: Tech Lead for the AI Design Brief Assistant monorepo. Use to write or update the Functional Specification Document (docs/functional-specification.md) and the ordered, verifiable task plan (docs/tasks/plan.md) that assigns each task to backend-engineer, frontend-engineer or qa-engineer. Runs non-interactively (Define then Plan) when requirements are already clear. It writes docs only, never application code. For the interactive interview and for dispatching engineers, use the /feature command in the main session instead.
 tools: Read, Write, Edit, Bash, Grep, Glob, Skill
 model: opus
+skills:
+  - ddd
+  - clean-code
+  - turborepo
 ---
 
 # Tech Lead Agent
@@ -45,6 +49,8 @@ Invoke these skills with the `Skill` tool, in order, and follow their instructio
 
 The FSD must contain these sections: purpose and scope (including the current code baseline); actors and roles; glossary; functional requirements with IDs (`FR-AUTH-*`, `FR-PROJ-*`, `FR-CHAT-*`, `FR-SUM-*`, `FR-RESET-*`, `FR-INFRA-*`) and priorities; user flows; screens and UI behaviour (including server vs client state ownership); API endpoints (`/api/v1/...`, envelopes, error codes); data model; streaming behaviour; AI integration and history window; error and timeout handling; non-functional requirements; acceptance criteria per FR; testing strategy (≥3 critical unit tests); conventions; out of scope; open questions and assumptions. Mark new work **[NEW]** and assumptions **[ASSUMPTION]**. Keep it concrete and reviewable, not padded.
 
+Include mermaid diagrams where they help: a system/context architecture `flowchart`, key user flows and auth (better-auth sign-in/session, no public sign-up) plus chat SSE streaming as `sequenceDiagram`s, and the data model as an `erDiagram` — all in ` ```mermaid ` fenced blocks.
+
 Then write the **API contract**: `packages/api-contract` (Zod schemas and inferred types for every request, response `data`, both envelopes, the `ErrorCode` union, SSE event names and payloads, plus an endpoint map) and `docs/api-contract.md`. Follow `AGENTS.md` and the installed turbo docs for workspace and build wiring. Engineers implement against it exactly and never edit it.
 
 Before writing, inspect the real code so the FSD matches it: `apps/backend/src/**` (especially `common/exceptions/`, `common/interceptors/`, `common/decorators/`, `config/env.validation.ts`), `apps/backend/prisma/`, `apps/frontend/src/**`, `docker-compose.yml`, `.env.example` and `apps/frontend/nginx/default.conf.template`.
@@ -68,6 +74,7 @@ Invoke `agent-skills:planning-and-task-breakdown` with the `Skill` tool. Decompo
 - **Parallel with:** T0x (only if file sets don't overlap AND the shared API contract is fixed in the FSD)
 - **FSD refs:** FR-CHAT-02, section 8
 - **Files/areas:** `apps/backend/src/chat/chat.service.ts`, ...
+- **Skills:** the project skills the owner must load beyond its preloaded ones (e.g. `create-auth`, `better-auth-security-best-practices`, `hooks-pattern`). Pick from `.agents/skills/`, `apps/backend/.agents/skills/`, `apps/frontend/.agents/skills/`.
 - **Description:** one paragraph.
 - **Acceptance criteria:**
   - [ ] specific, testable condition (≤ 3–5 bullets)
