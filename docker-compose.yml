@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lmesh}
       POSTGRES_DB: ${POSTGRES_DB:-lmesh_cmf}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -36,23 +36,29 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-lmesh}:${POSTGRES_PASSWORD:-lmesh}@postgres:5432/${POSTGRES_DB:-lmesh_cmf}?schema=public
       SEED_ON_START: ${SEED_ON_START:-true}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      AI_PROVIDER: ${AI_PROVIDER:-ollama}
-      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-60000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-in-production-0123456789abcdef}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:${FRONTEND_PORT:-5173}}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:${FRONTEND_PORT:-5173}}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      # Swagger UI at /api/docs stays on in this (production-mode) stack for reviewers.
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      AI_PROVIDER: ${AI_PROVIDER:-openrouter}
+      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-120000}
+      AI_FIRST_TOKEN_TIMEOUT_MS: ${AI_FIRST_TOKEN_TIMEOUT_MS:-30000}
       AI_HISTORY_MAX_MESSAGES: ${AI_HISTORY_MAX_MESSAGES:-20}
+      AI_HISTORY_MAX_CHARS: ${AI_HISTORY_MAX_CHARS:-24000}
+      AI_FAULT_INJECTION: "false"
       # Defaults to an Ollama running on the host; use http://ollama:11434 with `--profile ollama`.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-meta-llama/llama-3.1-8b-instruct:free}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-nvidia/nemotron-3-ultra-550b-a55b:free}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash-lite}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${BACKEND_PORT:-3000}:3000"
+      - "127.0.0.1:${BACKEND_PORT:-3000}:3000"
 
   frontend:
     build:
@@ -73,7 +79,7 @@ services:
     profiles: ["ollama"]
     restart: unless-stopped
     ports:
-      - "${OLLAMA_PORT:-11434}:11434"
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
     volumes:
       - ollama-data:/root/.ollama
 

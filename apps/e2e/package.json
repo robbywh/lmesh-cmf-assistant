@@ -1,0 +1,25 @@
+{
+  "name": "e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright end-to-end tests, run on demand against the running docker compose stack.",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "pretest:e2e": "pnpm --filter @lmesh/api-contract build",
+    "test:e2e": "playwright test",
+    "install:browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "@lmesh/api-contract": "workspace:*"
+  },
+  "devDependencies": {
+    "@lmesh/eslint-config": "workspace:*",
+    "@lmesh/typescript-config": "workspace:*",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^24.0.0",
+    "eslint": "10.9.1",
+    "typescript": "5.9.3"
+  }
+}

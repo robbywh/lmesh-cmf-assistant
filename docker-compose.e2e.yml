@@ -1,0 +1,16 @@
+# E2E override: turns on the fault-injecting AI provider (FR-INFRA-07).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build
+#
+# Only this file enables AI_FAULT_INJECTION; docker-compose.yml and .env.example
+# keep it false. Normal messages still get a real AI answer: the decorator only
+# fakes failures when a message contains an [[e2e-fault:...]] marker (see
+# apps/backend/src/ai/providers/fault-injecting-ai.provider.ts).
+#
+# To run against a host Ollama, set these in your shell or .env (compose reads them
+# through the base file): AI_PROVIDER=ollama
+# OLLAMA_BASE_URL=http://host.docker.internal:11434 OLLAMA_MODEL=<pulled model>
+services:
+  backend:
+    environment:
+      AI_FAULT_INJECTION: "true"
