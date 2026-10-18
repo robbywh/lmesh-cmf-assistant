@@ -6,19 +6,25 @@ themes and materials. The assistant knows each project's context, streams its
 answers token by token, can **summarise the key design decisions**, and the
 conversation can be **reset** without losing the project. The brief this was
 built against is in [`docs/requirements.md`](docs/requirements.md); the
-architecture answers are in [`DECISIONS.md`](DECISIONS.md).
+functional specification is in [`docs/functional-specification.md`](docs/functional-specification.md); the API contract is in [`docs/api-contract.md`](docs/api-contract.md); and the architecture answers are in [`DECISIONS.md`](DECISIONS.md).
 
-## Current status
+## Deliverables
 
-Everything in the brief is implemented and runs from `docker compose up`:
+- [x] Git repository (public GitHub or shared link) with a readable commit history
+- [x] `README.md` — how to set up, start, and use the app; which AI provider you chose and why
+- [x] `DECISIONS.md` — answers to the architecture questions below (required, not optional)
+- [x] The app runs end-to-end from `docker compose up` + seed
+- [x] Unit tests (at least 3) covering the logic paths you consider most critical
+- [x] Seed script creates a working user with credentials documented in the README (e.g. `test@lmesh.eu / password`)
 
-- Email/password sign-in with [better-auth](https://better-auth.com) (session cookie, no public sign-up, rate limited) and a seeded user.
-- Design projects: list, create, edit, delete (title + optional description).
-- Per-project chat with a real LLM, streamed over SSE, with **Stop**, **Retry**, a "thinking" indicator and inline errors for timeouts and provider failures.
-- **Summarise** key decisions (streamed, saved as a summary card) and **Reset** conversation (the old one is archived).
-- Swappable AI provider behind one interface: OpenRouter (default), Ollama, Gemini.
-- Seed data: the login user plus three sample projects, one with a short conversation and a summary.
-- Tests: backend unit and integration tests (Vitest, real Postgres), frontend component tests, and Playwright end-to-end tests.
+## Documentation
+
+| Document | Purpose |
+| --- | --- |
+| [`docs/requirements.md`](docs/requirements.md) | Original brief and problem statement |
+| [`docs/functional-specification.md`](docs/functional-specification.md) | Complete Functional Specification (FSD): system architecture, sequence flows, data model, and security |
+| [`docs/api-contract.md`](docs/api-contract.md) | Endpoint specifications, SSE event protocols, and envelope schemas |
+| [`DECISIONS.md`](DECISIONS.md) | Architecture answers, technical rationale, and trade-offs |
 
 ## Quick start
 
@@ -120,133 +126,45 @@ Documented in [`.env.example`](.env.example) (copy it to `.env`). Used by Docker
 
 The frontend's [`apps/frontend/.env.example`](apps/frontend/.env.example) defines `VITE_API_BASE_URL` (baked in at build time), `VITE_DEV_API_PROXY_TARGET` (dev proxy target) and `VITE_API_MOCKING` (dev-only mock API).
 
-## Architecture
+## Running tests
 
-```mermaid
-flowchart LR
-    Browser["Browser"]
-    FE["nginx + React SPA<br/>:5173"]
-    API["NestJS + Fastify<br/>/api/v1"]
-    DB[("PostgreSQL<br/>via Prisma")]
-    AI["AI provider<br/>OpenRouter / Ollama / Gemini"]
+### Unit and integration tests
 
-    Browser -->|"HTTP, same origin"| FE
-    FE -->|"proxy /api, unbuffered<br/>session cookie"| API
-    API -->|"Prisma"| DB
-    API -->|"prompt + project context<br/>(fetch, streamed)"| AI
-    AI -->|"streamed tokens"| API
-    API -->|"SSE over POST"| FE
-```
-
-The browser only talks to nginx. The NestJS API is the single entry point: a global guard requires a session on every route except health and the auth routes, data is scoped to the signed-in user, and AI tokens are relayed to the browser over SSE as they arrive.
-
-### Sign-in
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant FE as Frontend SPA
-    participant API as NestJS API
-    participant DB as PostgreSQL
-
-    User->>FE: email + password
-    FE->>API: POST /api/v1/auth/sign-in/email
-    API->>DB: verify credential account (better-auth)
-    API-->>FE: 200 + Set-Cookie (HttpOnly, SameSite=Lax)
-    FE->>API: later requests carry the cookie
-    API->>DB: SessionGuard validates the session
-    API-->>FE: data, or 401 UNAUTHORIZED
-```
-
-better-auth is mounted in NestJS under `/api/v1/auth/*` (`apps/backend/src/auth/`). There is no sign-up route; the seed provisions the only account.
-
-### Streaming a reply
-
-```mermaid
-sequenceDiagram
-    participant FE as Frontend (fetch + reader)
-    participant API as ChatStreamService
-    participant DB as PostgreSQL
-    participant AI as AI provider
-
-    FE->>API: POST /api/v1/projects/:id/messages
-    API->>DB: save user message + streaming placeholder
-    API-->>FE: SSE event message.created
-    API->>AI: streamChat(prompt)
-    loop each chunk
-        AI-->>API: delta
-        API-->>FE: SSE event token
-    end
-    API->>DB: save final content and status
-    API-->>FE: SSE event done (or error)
-```
-
-Events are `message.created`, `token`, `done` and `error`, validated against the shared contract in `packages/api-contract`. If the browser disconnects (Stop, closed tab) the server saves the partial answer as `aborted`. Summarise (`POST /projects/:id/summaries`) and Retry (`POST /messages/:id/retry`) use the same stream.
-
-## Project structure
-
-```
-apps/
-  backend/                 NestJS 11 + Fastify, Prisma 7, PostgreSQL
-    src/auth/              better-auth instance, /auth/* handler, SessionGuard, @CurrentUser
-    src/projects/          projects CRUD (owner-scoped)
-    src/conversations/     active conversation, reset, stale-stream recovery
-    src/chat/              send / summarise / retry streams, prompts, history window, SSE writer (`*.util.ts`)
-    src/ai/                AiProvider port, factory, OpenRouter / Ollama / Gemini adapters, fault injection
-    src/common/            exceptions, Origin guard, global filter, response envelope, Zod validation pipe
-    prisma/                schema, migrations, seed
-    test/                  integration tests (real Postgres)
-  frontend/                React 19 SPA
-    src/features/auth/     login, session query, sign-out
-    src/features/projects/ sidebar, project dialogs, queries
-    src/features/chat/     message list, composer, SSE reader, stream hooks
-    src/stores/            Zustand: in-flight stream, UI preferences
-  e2e/                     Playwright tests against the running stack
-packages/
-  api-contract/            shared Zod schemas, types, error codes, SSE events
-  eslint-config/, typescript-config/
-```
-
-API docs are generated from the code and served at <http://localhost:5173/api/docs>.
-
-## Tests
+Prerequisites: A running PostgreSQL instance (e.g. `docker compose up -d postgres`):
 
 ```sh
 pnpm install                    # once
-docker compose up -d postgres   # the backend integration tests need only Postgres
-pnpm test                       # unit + integration + component tests for every package
+docker compose up -d postgres   # backend integration tests need only PostgreSQL
+pnpm test                       # runs unit + integration + component tests across all packages
 ```
 
-The backend integration tests use a separate `lmesh_cmf_test` database that is created and migrated automatically; no AI provider is needed (it is replaced by a scripted test double). Other root checks:
+The backend integration tests automatically use a dedicated `lmesh_cmf_test` database (created and migrated automatically on start); no external AI provider key is required (mocked by an integration test double).
+
+To run linter and type checks across the monorepo:
 
 ```sh
 pnpm lint
 pnpm check-types
 ```
 
-**End-to-end** (Playwright, real browser, real stack with fault injection enabled so failures can be triggered with markers like `[[e2e-fault:timeout]]`):
+### End-to-end tests (Playwright)
+
+Runs full browser journeys against the complete stack with fault-injection enabled to verify authentication, projects, SSE streaming, timeouts, and network aborts:
 
 ```sh
+# Start the full stack with the E2E override (enables fault injection)
 docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build -d
-pnpm --filter e2e install:browsers     # once: installs Chromium
+
+# Install Chromium browser (once) and run test suite
+pnpm --filter e2e install:browsers
 pnpm --filter e2e test:e2e
 ```
 
-The sign-in endpoint is rate limited to 5 attempts per 60 seconds per IP, so wait a minute between repeated e2e runs. Real AI journeys use your configured provider; the fault markers never reach it.
-
-## Security notes
-
-- Published ports of the backend, PostgreSQL and Ollama are bound to `127.0.0.1`; only the web app port is exposed to the network. The backend trusts exactly one proxy hop (`TRUST_PROXY=1`) and nginx overwrites `X-Forwarded-For`, so clients cannot spoof the IP used for rate limiting.
-- The session is an `HttpOnly`, `SameSite=Lax` cookie, `Secure` when `BETTER_AUTH_URL` is `https://`. Sign-in is rate limited (5 per minute per IP) and wrong credentials give one generic message.
-- nginx sends a strict Content-Security-Policy (`default-src 'self'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` and a Referrer-Policy.
-- State-changing requests (`POST`, `PATCH`, `PUT`, `DELETE`) that carry an `Origin` header outside the allowed list (`CORS_ORIGIN` plus the `BETTER_AUTH_URL` origin) are rejected with `403 FORBIDDEN`, which closes CSRF for the cookie session.
-- If the session lookup itself fails (for example the database is down) the API answers `503 SERVICE_UNAVAILABLE`, not `401`, so a backend outage never signs users out.
-- AI output is rendered as Markdown with raw HTML disabled and images not rendered (a remote image would leak the reader's IP); provider error text is logged (truncated, key removed) but never sent to the browser.
-- For anything non-local: set a real `BETTER_AUTH_SECRET`, change the database password, set `SEED_ON_START=false` (the seed user's password is public), and consider `SWAGGER_ENABLED=false`.
+> **Note:** The sign-in endpoint is rate limited to 5 attempts per 60 seconds per IP. Allow 60 seconds between rapid successive E2E test runs.
 
 ## Local development without Docker
 
-Needs a reachable PostgreSQL matching `DATABASE_URL` (for example `docker compose up -d postgres`):
+If you prefer running backend and frontend directly on the host with Node.js and `pnpm`, connect to a local PostgreSQL instance (e.g. `docker compose up -d postgres`):
 
 ```sh
 pnpm install
@@ -256,6 +174,13 @@ pnpm --filter backend db:seed
 pnpm dev
 ```
 
-`pnpm dev` starts the backend (NestJS watch mode, API on <http://localhost:3000/api/v1>) and the Vite dev server on <http://localhost:5173>, which proxies `/api` to the backend. Other scripts: `pnpm build`, `pnpm format`, `pnpm --filter backend prisma:migrate` (create a dev migration), `pnpm --filter backend test:watch`, `pnpm --filter frontend test:watch`.
+`pnpm dev` starts:
+- The **NestJS backend** in watch mode (<http://localhost:3000/api/v1>, with Swagger UI at <http://localhost:3000/api/docs>)
+- The **Vite frontend** dev server on <http://localhost:5173> (which proxies `/api` to the backend)
 
-Conventions (file naming, response envelopes, exceptions, logging) follow `docs/requirements.md`; design decisions and trade-offs are in [`DECISIONS.md`](DECISIONS.md).
+Other development commands:
+- `pnpm build` — Build all apps and packages via Turbo
+- `pnpm format` — Format codebase with Prettier
+- `pnpm --filter backend test:watch` — Vitest in watch mode for backend tests
+- `pnpm --filter frontend test:watch` — Vitest in watch mode for frontend tests
+- `pnpm --filter backend prisma:migrate` — Create and apply a new Prisma database migration

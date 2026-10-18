@@ -197,6 +197,32 @@ flowchart LR
   be -- "SSE text/event-stream" --> fe
 ```
 
+The browser only talks directly to nginx. The NestJS API is the single entry point behind nginx: a global guard requires a session on every route except health and the auth routes, data is scoped to the signed-in user, and AI tokens are relayed to the browser over SSE as they arrive.
+
+#### 5.1.1 Project structure and codebase layout
+
+```
+apps/
+  backend/                 NestJS 11 + Fastify, Prisma 7, PostgreSQL
+    src/auth/              better-auth instance, /auth/* handler, SessionGuard, @CurrentUser
+    src/projects/          projects CRUD (owner-scoped)
+    src/conversations/     active conversation, reset, stale-stream recovery
+    src/chat/              send / summarise / retry streams, prompts, history window, SSE writer (*.util.ts)
+    src/ai/                AiProvider port, factory, OpenRouter / Ollama / Gemini adapters, fault injection
+    src/common/            exceptions, Origin guard, global filter, response envelope, Zod validation pipe
+    prisma/                schema, migrations, seed
+    test/                  integration tests (real Postgres)
+  frontend/                React 19 SPA
+    src/features/auth/     login, session query, sign-out
+    src/features/projects/ sidebar, project dialogs, queries
+    src/features/chat/     message list, composer, SSE reader, stream hooks
+    src/stores/            Zustand: in-flight stream, UI preferences
+  e2e/                     Playwright tests against the running stack
+packages/
+  api-contract/            shared Zod schemas, types, error codes, SSE events
+  eslint-config/, typescript-config/
+```
+
 ### 5.2 Sign-in and session
 
 ```mermaid
@@ -769,6 +795,16 @@ Other API errors: `VALIDATION_FAILED` maps to form fields; `NOT_FOUND` shows the
 | NFR-06 Accessibility     | All controls keyboard reachable with visible focus; labelled inputs; dialogs trap focus; streaming message announced politely; colour contrast WCAG AA.                                                                                                                                                                                                                                 |
 | NFR-07 Observability     | Structured logs per request and per AI call (FR-INFRA-10).                                                                                                                                                                                                                                                                                                                              |
 | NFR-08 Portability       | Runs on macOS/Linux with Docker Desktop; Node ≥ 24 and pnpm 11 for local dev.                                                                                                                                                                                                                                                                                                           |
+
+### 12.1 Security architecture
+
+- **Network boundary & port isolation:** Published ports of the backend, PostgreSQL, and Ollama are bound strictly to `127.0.0.1` on the host; only the web app port (`:5173`) is exposed to external traffic. The backend trusts exactly one proxy hop (`TRUST_PROXY=1`) and nginx overwrites `X-Forwarded-For`, preventing clients from spoofing client IPs for rate limiting.
+- **Session management:** The session cookie is `HttpOnly`, `SameSite=Lax`, and `Secure` when `BETTER_AUTH_URL` is `https://`. Sign-in is rate-limited (5 attempts per minute per IP), and invalid credentials produce a uniform generic error message.
+- **Security headers:** nginx enforces a strict Content-Security-Policy (`default-src 'self'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and a `Referrer-Policy`.
+- **CSRF protection:** State-changing requests (`POST`, `PATCH`, `PUT`, `DELETE`) carrying an `Origin` header outside the allowed list (`CORS_ORIGIN` plus the `BETTER_AUTH_URL` origin) are rejected with `403 FORBIDDEN` via `OriginGuard`.
+- **Resilient auth failures:** If the session lookup itself fails (e.g. database connection issues), the API responds with `503 SERVICE_UNAVAILABLE` rather than `401 UNAUTHORIZED`, ensuring temporary database outages do not forcibly sign users out.
+- **Content sanitization & error shielding:** AI output is rendered as Markdown with raw HTML disabled and images prevented from rendering (eliminating IP exfiltration vectors). Provider error payloads are logged server-side (truncated with API keys redacted) and are never exposed to the client raw.
+- **Production hardening:** Non-local deployments require generating a unique `BETTER_AUTH_SECRET`, setting a strong database password, setting `SEED_ON_START=false`, and setting `SWAGGER_ENABLED=false`.
 
 ---
 

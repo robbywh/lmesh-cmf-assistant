@@ -12,5 +12,5 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 ## Project
 - Monorepo (pnpm 11, Node >=24): apps/backend (NestJS + Prisma + better-auth), apps/frontend (Vite + React), packages/eslint-config, packages/typescript-config.
 - Commands (via turbo from root): `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm check-types`, `pnpm test`; `pnpm format` runs Prettier directly. Backend: `pnpm --filter backend prisma:generate`, `pnpm --filter backend prisma:migrate`, `pnpm --filter backend prisma:migrate:deploy`, `pnpm --filter backend db:seed`.
-- Specs/plans: `docs/requirements.md`. The FSD and task plan go to `docs/functional-specification.md` and `docs/tasks/plan.md` once written (not yet present).
+- Specs: `docs/requirements.md` and `docs/functional-specification.md`.
 - Skills live in `.claude/skills/` (shared), `apps/backend/.claude/skills/`, and `apps/frontend/.claude/skills/`.
