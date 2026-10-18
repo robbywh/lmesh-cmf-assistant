@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { AppModule } from "../src/app.module";
 import { ErrorCode } from "../src/common/exceptions";
 import { PrismaService } from "../src/prisma/prisma.service";
-import { setupApp } from "../src/setup-app";
+import { setupApp } from "../src/setup-app.util";
 
 describe("GET /api/v1/health (e2e, database mocked)", () => {
   let app: NestFastifyApplication;

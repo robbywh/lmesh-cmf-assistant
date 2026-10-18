@@ -1,18 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { hash } from "bcryptjs";
 import { config as loadEnv } from "dotenv";
 
 import { PrismaClient } from "../src/generated/prisma/client";
+import { seedSampleProjects } from "./seed-data";
+import { seedUser } from "./seed-user";
 
 loadEnv({ path: [".env", "../../.env"], quiet: true });
-
-const SEED_USER = {
-  email: "test@lmesh.eu",
-  password: "password",
-  name: "Test Designer",
-} as const;
-
-const BCRYPT_ROUNDS = 10;
 
 /**
  * Idempotent seed: safe to run on every container start.
@@ -28,13 +21,10 @@ async function main(): Promise<void> {
   });
 
   try {
-    const passwordHash = await hash(SEED_USER.password, BCRYPT_ROUNDS);
-    const user = await prisma.user.upsert({
-      where: { email: SEED_USER.email },
-      update: {},
-      create: { email: SEED_USER.email, name: SEED_USER.name, passwordHash },
-    });
-    console.log(`Seeded user ${user.email}`);
+    const email = await seedUser(prisma);
+    console.log(`Seeded user ${email}`);
+    const created = await seedSampleProjects(prisma, email);
+    console.log(`Seeded ${created} sample project(s)`);
   } finally {
     await prisma.$disconnect();
   }

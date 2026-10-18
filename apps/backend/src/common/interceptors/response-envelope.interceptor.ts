@@ -1,3 +1,4 @@
+import type { SuccessEnvelope } from "@lmesh/api-contract";
 import {
   CallHandler,
   ExecutionContext,
@@ -9,13 +10,6 @@ import { Observable, map } from "rxjs";
 
 import { RAW_RESPONSE_KEY, RESPONSE_MESSAGE_KEY } from "../decorators";
 
-/** Standard success response body. */
-export interface SuccessResponse<T> {
-  data: T;
-  message?: string;
-  code?: string;
-}
-
 /**
  * Global interceptor that wraps handler return values in the standard
  * `{ data, message? }` success envelope. Handlers decorated with
@@ -24,7 +18,7 @@ export interface SuccessResponse<T> {
 @Injectable()
 export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
   T,
-  SuccessResponse<T> | T
+  SuccessEnvelope<T> | T
 > {
   constructor(private readonly reflector: Reflector) {}
 
@@ -37,7 +31,7 @@ export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
   public intercept(
     context: ExecutionContext,
     next: CallHandler<T>,
-  ): Observable<SuccessResponse<T> | T> {
+  ): Observable<SuccessEnvelope<T> | T> {
     const targets = [context.getHandler(), context.getClass()];
 
     if (this.reflector.getAllAndOverride<boolean>(RAW_RESPONSE_KEY, targets)) {

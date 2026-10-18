@@ -101,12 +101,13 @@ describe("AllExceptionsFilter", () => {
     expect(Logger.prototype.error).toHaveBeenCalled();
   });
 
-  it("passes through 4xx framework errors that carry a statusCode (e.g. malformed JSON)", () => {
+  it("echoes the message of Fastify FST_* errors with a 4xx status (e.g. malformed JSON)", () => {
     const reply = createReply();
     const fastifyError = Object.assign(
       new SyntaxError("Unexpected token in JSON"),
       {
         statusCode: HttpStatus.BAD_REQUEST,
+        code: "FST_ERR_CTP_INVALID_JSON_BODY",
       },
     );
 
@@ -118,6 +119,29 @@ describe("AllExceptionsFilter", () => {
       code: ErrorCode.BAD_REQUEST,
     });
   });
+
+  it.each([
+    [HttpStatus.BAD_REQUEST, "Bad request", ErrorCode.BAD_REQUEST],
+    [HttpStatus.NOT_FOUND, "Resource not found", ErrorCode.NOT_FOUND],
+    [
+      HttpStatus.TOO_MANY_REQUESTS,
+      "Too many requests",
+      ErrorCode.TOO_MANY_REQUESTS,
+    ],
+  ])(
+    "gives other 4xx errors with a statusCode (status %i) a generic message, never the raw one",
+    (status, message, code) => {
+      const reply = createReply();
+      const error = Object.assign(new Error("secret internal detail"), {
+        statusCode: status,
+      });
+
+      filter.catch(error, createHost(reply));
+
+      expect(reply.status).toHaveBeenCalledWith(status);
+      expect(reply.send).toHaveBeenCalledWith({ message, code });
+    },
+  );
 
   it("does not write to a reply that was already sent", () => {
     const reply = createReply(true);

@@ -1,5 +1,6 @@
-import { Type, plainToInstance } from "class-transformer";
+import { Transform, Type, plainToInstance } from "class-transformer";
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -12,6 +13,9 @@ import {
   validateSync,
 } from "class-validator";
 
+import { ConfigurationException } from "../common/exceptions";
+import { DEFAULT_TRUST_PROXY } from "./trust-proxy.util";
+
 export enum NodeEnvironment {
   Development = "development",
   Production = "production",
@@ -22,6 +26,16 @@ export enum AiProviderName {
   Ollama = "ollama",
   OpenRouter = "openrouter",
   Gemini = "gemini",
+}
+
+/**
+ * Parses `"true"`/`"false"` strictly; any other value is returned unchanged so
+ * `@IsBoolean` rejects it (plain implicit conversion would turn `"false"` into `true`).
+ */
+function parseStrictBoolean(value: unknown): unknown {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return value;
 }
 
 /**
@@ -46,23 +60,59 @@ export class EnvironmentVariables {
   })
   DATABASE_URL!: string;
 
+  /** Signs and encrypts better-auth sessions and cookies. */
   @IsString()
-  @MinLength(16)
-  JWT_SECRET!: string;
+  @MinLength(32)
+  BETTER_AUTH_SECRET!: string;
 
+  /** Public origin of the app that better-auth issues cookies for. */
+  @IsUrl({ require_tld: false })
+  BETTER_AUTH_URL = "http://localhost:5173";
+
+  /**
+   * Proxies Fastify trusts for the client IP: a hop count (default 1 = nginx),
+   * "true"/"false", or a comma-separated list of addresses/CIDRs.
+   */
   @IsString()
-  JWT_EXPIRES_IN = "1d";
+  TRUST_PROXY: string = DEFAULT_TRUST_PROXY;
 
   @IsString()
   CORS_ORIGIN = "http://localhost:5173";
 
   @IsEnum(AiProviderName)
-  AI_PROVIDER: AiProviderName = AiProviderName.Ollama;
+  AI_PROVIDER: AiProviderName = AiProviderName.OpenRouter;
 
   @Type(() => Number)
   @IsInt()
   @Min(1000)
-  AI_REQUEST_TIMEOUT_MS: number = 60000;
+  AI_REQUEST_TIMEOUT_MS: number = 120000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  AI_FIRST_TOKEN_TIMEOUT_MS: number = 30000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  AI_HISTORY_MAX_CHARS: number = 24000;
+
+  /**
+   * Mount Swagger at /api/docs in production (outside production it is always on).
+   * Strict "true"/"false" like AI_FAULT_INJECTION.
+   */
+  @Transform(({ obj, key }: { obj: Record<string, unknown>; key: string }) =>
+    parseStrictBoolean(obj[key]),
+  )
+  @IsBoolean({ message: 'SWAGGER_ENABLED must be "true" or "false"' })
+  SWAGGER_ENABLED: boolean = false;
+
+  /** Enables e2e fault injection; only `docker-compose.e2e.yml` turns it on. */
+  @Transform(({ obj, key }: { obj: Record<string, unknown>; key: string }) =>
+    parseStrictBoolean(obj[key]),
+  )
+  @IsBoolean({ message: 'AI_FAULT_INJECTION must be "true" or "false"' })
+  AI_FAULT_INJECTION: boolean = false;
 
   @Type(() => Number)
   @IsInt()
@@ -116,8 +166,10 @@ export function validateEnv(
       )
       .join("; ");
     // Runs before Nest bootstraps, so no app exception filter can handle this;
-    // failing fast with a plain error is intentional.
-    throw new Error(`Invalid environment configuration: ${details}`);
+    // failing fast with the error message is intentional.
+    throw new ConfigurationException(
+      `Invalid environment configuration: ${details}`,
+    );
   }
 
   return validated;

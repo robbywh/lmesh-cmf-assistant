@@ -20,6 +20,16 @@ const STATUS_TO_CODE: Partial<Record<number, ErrorCode>> = {
   [HttpStatus.SERVICE_UNAVAILABLE]: ErrorCode.SERVICE_UNAVAILABLE,
 };
 
+const GENERIC_MESSAGES: Partial<Record<number, string>> = {
+  [HttpStatus.BAD_REQUEST]: "Bad request",
+  [HttpStatus.UNAUTHORIZED]: "Authentication required",
+  [HttpStatus.FORBIDDEN]: "Forbidden",
+  [HttpStatus.NOT_FOUND]: "Resource not found",
+  [HttpStatus.CONFLICT]: "Conflict",
+  [HttpStatus.PAYLOAD_TOO_LARGE]: "Request body is too large",
+  [HttpStatus.TOO_MANY_REQUESTS]: "Too many requests",
+};
+
 const INTERNAL_ERROR_STATUS: number = HttpStatus.INTERNAL_SERVER_ERROR;
 
 interface NormalizedError {
@@ -96,8 +106,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return {
         status: statusCode,
         body: {
-          message:
-            exception instanceof Error ? exception.message : "Bad request",
+          message: this.frameworkMessage(exception, statusCode),
           code: STATUS_TO_CODE[statusCode] ?? ErrorCode.BAD_REQUEST,
         },
       };
@@ -110,6 +119,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
         code: ErrorCode.INTERNAL_ERROR,
       },
     };
+  }
+
+  /**
+   * Fastify's own validation/parsing errors (`FST_*`) have safe, useful messages.
+   * Anything else with a 4xx status gets a generic message so internals never leak.
+   */
+  private frameworkMessage(exception: unknown, status: number): string {
+    const code = (exception as { code?: unknown }).code;
+    if (
+      exception instanceof Error &&
+      typeof code === "string" &&
+      code.startsWith("FST_")
+    ) {
+      return exception.message;
+    }
+    return GENERIC_MESSAGES[status] ?? "Bad request";
   }
 
   private extractHttpMessage(exception: HttpException): string {

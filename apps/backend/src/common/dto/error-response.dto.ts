@@ -1,23 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ErrorEnvelopeSchema } from "@lmesh/api-contract";
+import { createZodDto } from "nestjs-zod";
 
-import { ErrorCode } from "../exceptions";
-
-/** Swagger model for the standard error response body. */
-export class ErrorResponseDto {
-  @ApiProperty({ example: "Validation failed" })
-  message!: string;
-
-  @ApiProperty({
-    enum: ErrorCode,
-    enumName: "ErrorCode",
-    example: ErrorCode.VALIDATION_FAILED,
-  })
-  code!: ErrorCode;
-
-  @ApiPropertyOptional({
-    type: "object",
-    additionalProperties: { type: "array", items: { type: "string" } },
-    example: { email: ["email must be an email"] },
-  })
-  errors?: Record<string, string[]>;
-}
+/** Swagger model for the standard error response body (the contract's `ErrorEnvelope`). */
+export class ErrorResponseDto extends createZodDto(ErrorEnvelopeSchema) {}

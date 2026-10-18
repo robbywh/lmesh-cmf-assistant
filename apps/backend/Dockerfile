@@ -35,13 +35,14 @@ RUN pnpm turbo run build --filter=backend
 FROM base AS prod-deps
 COPY --from=prune /repo/out/json/ .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-  pnpm install --frozen-lockfile --prod --filter backend
+  pnpm install --frozen-lockfile --prod --filter "backend..."
 
 # ---------------------------------------------------------------------------
 FROM base AS runtime
 ENV NODE_ENV=production
 WORKDIR /repo
 COPY --from=prod-deps --chown=node:node /repo/ ./
+COPY --from=build --chown=node:node /repo/packages/api-contract/dist ./packages/api-contract/dist
 COPY --from=build --chown=node:node /repo/apps/backend/dist ./apps/backend/dist
 COPY --from=build --chown=node:node /repo/apps/backend/prisma ./apps/backend/prisma
 COPY --from=build --chown=node:node /repo/apps/backend/prisma.config.ts ./apps/backend/prisma.config.ts

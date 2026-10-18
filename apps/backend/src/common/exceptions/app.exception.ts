@@ -1,16 +1,13 @@
+import type { ErrorEnvelope } from "@lmesh/api-contract";
 import { HttpException, HttpStatus } from "@nestjs/common";
 
 import { ErrorCode } from "./error-code.enum";
 
 /** Field-level validation messages, keyed by property path. */
-export type FieldErrors = Record<string, string[]>;
+export type FieldErrors = NonNullable<ErrorEnvelope["errors"]>;
 
-/** Serialized shape of every error response produced by the API. */
-export interface ErrorResponseBody {
-  message: string;
-  code: ErrorCode;
-  errors?: FieldErrors;
-}
+/** Serialized shape of every error response produced by the API (from the contract). */
+export type ErrorResponseBody = ErrorEnvelope;
 
 /**
  * Base class for every exception the application throws on purpose.

@@ -6,10 +6,12 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 
+import { Public } from "../common/decorators";
 import { ErrorResponseDto } from "../common/dto/error-response.dto";
 import { HealthResponseDto } from "./dto/health-response.dto";
 import { HealthService } from "./health.service";
 
+@Public()
 @ApiTags("health")
 @Controller({ path: "health", version: "1" })
 export class HealthController {
